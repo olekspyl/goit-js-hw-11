@@ -6,12 +6,19 @@ import Notiflix from 'notiflix';
 
 // створюю екземпляр класу, в який записала купу функцій. клас - зручніше
 const ImgEl = new ImgApi();
-console.log(ImgEl)
+let isEventListenerOnScroll = false;
 
 // доступ до елементів HTML
 const formEl = document.querySelector('#search-form');
 const gallery = document.querySelector('.gallery');
 
+
+function onScrollLoad() {
+  const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+  if (clientHeight + scrollTop >= scrollHeight) {
+    toGetImages();
+  }
+}
 
 // реєструю подію на формі
 formEl.addEventListener('submit', onFormSubmit);
@@ -33,6 +40,33 @@ function toGetImages() {
       } else {
         //   а якщо знайшов, то створи розмітку по хітс, бо в цьому масиві лежать об*єкти з картинок і властивостей
         insertMarkup(hits);
+        if (ImgEl.page === 1) {
+          if (!isEventListenerOnScroll) {
+            window.addEventListener('scroll', onScrollLoad);
+            isEventListenerOnScroll = true;
+          }
+
+          Notiflix.Notify.success(`Horray! We found ${totalHits} images`);
+        } else {
+          const { height: cardHeight } = document
+            .querySelector('.gallery')
+            .firstElementChild.getBoundingClientRect();
+
+          window.scrollBy({
+            top: cardHeight * 2,
+            behavior: 'smooth',
+          });
+        }
+
+        
+
+        if (total === totalHits) {
+          Notiflix.Notify.info(
+            `We're sorry, but you've reached the end of search results.`
+          );
+          window.removeEventListener('scroll', onScrollLoad);
+          isEventListenerOnScroll = false;
+        }
 // збільши на 1 кількість сторінок (була перша - перейди на другу)
         ImgEl.incrementPage();
       }
